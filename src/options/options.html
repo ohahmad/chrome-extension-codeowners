@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Options - Gitlab CodeOwners</title>
+    <style>
+      body {
+        margin: 18px;
+        font-family: system-ui, sans-serif;
+      }
+
+      fieldset {
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid currentColor;
+      }
+
+      legend {
+        font-weight: 600;
+        padding: 0 5px;
+      }
+
+      label {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        line-height: 17px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #292a2d;
+          color: #e8eaed;
+        }
+      }
+      
+      input {
+        margin-top: 5px;
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <fieldset>
+      <legend>Options - Gitlab code owners resolver</legend>
+      <div class="field">
+        <label for="codeowners-remove">
+          Removes the given text from matching code owners before displaying on site.
+        </label>
+        <input type="text" name="codeowners-remove" placeholder="@company/i-do-not-want-to-see-this" />
+      </div>
+    </fieldset>
+
+    <script src="options.js"></script>
+  </body>
+</html>

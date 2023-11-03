@@ -1,0 +1,20 @@
+{
+  "name": "chrome-extension-codeowners",
+  "version": "1.0.0",
+  "description": "Retrieves the code owners to display in gitlab UI over the patterns",
+  "scripts": {
+    "start": "node --loader ts-node/esm index.ts",
+    "copy-files": "copyfiles -u 1 src/**/*.html src/**/*.png dist/",
+    "build": "tsc && npm run copy-files"
+  },
+  "author": "ommer ahmad",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.0.248",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "uglify-js": "^3.17.4"
+  }
+}
