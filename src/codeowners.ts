@@ -231,6 +231,6 @@ if (branch && projectId) {
           attributeFilter: ["style"],
         });
       }
-    }, 1000);
+    }, 1500);
   } catch {}
 }
