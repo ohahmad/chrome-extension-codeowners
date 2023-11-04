@@ -5,9 +5,9 @@
   "scripts": {
     "start": "node --loader ts-node/esm index.ts",
     "copy-files": "copyfiles -u 1 src/manifest.json src/**/*.html src/**/*.png dist/",
-    "es-build": "esbuild --minify --bundle src/*.ts src/**/*.ts  --outdir=./dist && npm run copy-files",
-    "es-build-dev": "esbuild src/*.ts src/**/*.ts  --outdir=./dist && npm run copy-files",
-    "es-build-watch": "esbuild --minify --bundle  src/*.ts src/**/*.ts  --outdir=./dist --watch && npm run copy-files"
+    "build": "esbuild --minify --bundle src/*.ts src/**/*.ts  --outdir=./dist && npm run copy-files",
+    "build-dev": "esbuild src/*.ts src/**/*.ts  --outdir=./dist && npm run copy-files",
+    "watch": "esbuild --minify --bundle  src/*.ts src/**/*.ts  --outdir=./dist --watch && npm run copy-files"
   },
   "author": "ommer ahmad",
   "license": "ISC",
