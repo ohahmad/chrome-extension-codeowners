@@ -208,7 +208,7 @@ if (branch && projectId) {
       // We can start observing given we're on the correct tab.
       approvalSection && startObserving();
 
-      // Since there's no nice way to listen for change given they be via history or pop states - let's start observing the section (tabs) themselves
+      // Since there's no nice way to listen for location changes given they can be via history or pop states - let's start observing the section (tabs) themselves
       // Listen in for when tab switches so we can start / stop observing as needed - no point trying to check for approvals when we're not in the right section.
       const mergeApprovalsSection = document.getElementById("notes");
       if (mergeApprovalsSection) {
