@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Retrieves the code owners to display in gitlab UI over the patterns",
   "scripts": {
-    "start": "node --loader ts-node/esm index.ts",
+    "clean": "rm -rf ./dist",
     "copy-files": "copyfiles -u 1 src/manifest.json src/**/*.html src/**/*.png dist/",
-    "build": "esbuild --minify --bundle src/*.ts src/**/*.ts  --outdir=./dist && npm run copy-files",
-    "build-dev": "esbuild src/*.ts src/**/*.ts  --outdir=./dist && npm run copy-files",
-    "watch": "esbuild --minify --bundle  src/*.ts src/**/*.ts  --outdir=./dist --watch && npm run copy-files"
+    "build": "npm run clean && ./build.mjs minify bundle && npm run copy-files",
+    "build-dev": "npm run clean && ./build.mjs  && npm run copy-files",
+    "watch": "npm run clean && ./build.mjs watch && npm run copy-files"
   },
   "author": "ommer ahmad",
   "license": "ISC",
