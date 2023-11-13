@@ -4,6 +4,18 @@ import {
   loadCodeOwners,
 } from "./codeowners_file_parser";
 
+type ApprovalSectionsByOwners = Record<
+  string, // the owners string e.g "@company/dev, @company/test"
+  {
+    // The approval sections for the matched owners - one display per pattern
+    approvalSections: HTMLElement[];
+    // All the different patterns matching the owners e.g. [path/file1, path/subfolder]
+    patterns: string[];
+    // The element actually showing the first pattern match found
+    patternElement: HTMLElement;
+  }
+>;
+
 let codeOwnersData: CodeOwnersFormat[];
 let codeOwnersFilterText: string[] = [];
 // The observer for the tabs Overview, Commits, Tabs etc...
@@ -34,6 +46,42 @@ const getValueFromStorage = async (key: string): Promise<string> => {
       }
     });
   });
+};
+
+// Group the patterns by the owners so we can remove duplicates later
+// Gitlab UI displays each pattern separately even though they are owned by the same groups.
+// e.g. file1 and file2 could both be owned by groups [devTeam, testTeam] but they have separate sections in the UI
+// This allows us to group these back into section, simplifying the UI
+const addUpdateApprovalSectionForOwners = (
+  record: ApprovalSectionsByOwners,
+  ownersForPattern: string,
+  patternElement: HTMLElement,
+  approvalSectionElement: HTMLElement
+) => {
+  if (!record[ownersForPattern]) {
+    record[ownersForPattern] = {
+      approvalSections: [approvalSectionElement],
+      patterns: [patternElement.innerText],
+      patternElement: patternElement,
+    };
+  } else {
+    record[ownersForPattern].approvalSections.push(approvalSectionElement);
+    record[ownersForPattern].patterns.push(patternElement.innerText);
+  }
+};
+
+// Hide any duplicate sections so the UI doesn't repeat itself per pattern like it currently does.
+// Instead we will only display it once and set the title to all the matching patterns found in an MR
+const hideDuplicateApprovalSections = (record: ApprovalSectionsByOwners) => {
+  for (const key in record) {
+    const paths = record[key].patterns.join("\n");
+    record[key].patternElement.title = paths;
+
+    // Hide duplicates
+    record[key].approvalSections.slice(1).forEach((approvalSection) => {
+      approvalSection.style.display = "none";
+    });
+  }
 };
 
 const approvalsSectionObserver = new MutationObserver(async (mutations) => {
@@ -68,6 +116,8 @@ const approvalsSectionObserver = new MutationObserver(async (mutations) => {
 
         // If there's no code owners file - then nothing to update
         if (codeOwnersData) {
+          const groupedApprovals: ApprovalSectionsByOwners = {};
+
           // Let's get all the rows which contain a code owner section
           const approvalRulesElements = node.querySelectorAll(
             `[data-testid=${approvalRowsTestId}]`
@@ -83,19 +133,30 @@ const approvalsSectionObserver = new MutationObserver(async (mutations) => {
             );
 
             if (codeOwnersTitleElement) {
-              const codeOwnersPathElement =
+              const codeOwnersPatternElement =
                 codeOwnersTitleElement.nextElementSibling as HTMLElement;
 
               // Let's replace the pattern e.g. libs/ui/ with the actual owners e.g.
-              if (codeOwnersPathElement) {
-                codeOwnersPathElement.innerText =
+              if (codeOwnersPatternElement) {
+                const ownersForPattern =
                   getMatchingCodeOwnersForPattern(
                     codeOwnersData,
-                    codeOwnersPathElement.innerText
-                  ) || codeOwnersPathElement.innerText;
+                    codeOwnersPatternElement.innerText
+                  ) || codeOwnersPatternElement.innerText;
+
+                addUpdateApprovalSectionForOwners(
+                  groupedApprovals,
+                  ownersForPattern,
+                  codeOwnersPatternElement,
+                  rule as HTMLElement
+                );
+
+                codeOwnersPatternElement.innerText = ownersForPattern;
               }
             }
           });
+
+          hideDuplicateApprovalSections(groupedApprovals);
         }
       }
     }
