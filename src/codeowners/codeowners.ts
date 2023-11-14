@@ -3,6 +3,15 @@ import {
   getMatchingCodeOwnersForPattern,
   loadCodeOwners,
 } from "./codeowners_file_parser";
+import {
+  getApprovalRows,
+  getApprovalRowHeaderElement,
+  containsApprovalsFooterSection,
+  projectId,
+  getApprovalsContainer,
+  getOverviewTab,
+} from "./gitlab_dom_helper";
+import { getValueFromStorage } from "./storage_helper";
 
 type ApprovalSectionsByOwners = Record<
   string, // the owners string e.g "@company/dev, @company/test"
@@ -20,33 +29,6 @@ let codeOwnersData: CodeOwnersFormat[];
 let codeOwnersFilterText: string[] = [];
 // The observer for the tabs Overview, Commits, Tabs etc...
 let tabsObserver: MutationObserver;
-
-// This is the wrapper for entire approvals section - we observe mutations under here.
-const approvalsSectionClassName = "js-mr-approvals";
-// This is the first element to render in gitlab when expanding the approvals section in an MR
-const approvalsFooterTestId = "approvals-footer";
-// Gitlab render these - one per code owner
-const approvalRowsTestId = "approval-rules-row";
-// The selector for the literal 'Code Owners' text - one per code owner
-const codeOwnersTitleTestId = "rule-section";
-
-let projectId = document.body.getAttribute("data-project-id");
-// Let's use the branch for which the MR relates too. I tried master but we also have qa branches as defaults.
-let branch = document
-  .querySelector(".js-source-branch-copy")
-  ?.getAttribute("data-clipboard-text");
-
-const getValueFromStorage = async (key: string): Promise<string> => {
-  return new Promise(function (resolve, reject) {
-    chrome.storage.local.get(key, function (items) {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError.message);
-      } else {
-        resolve(items[key] as string);
-      }
-    });
-  });
-};
 
 // Group the patterns by the owners so we can remove duplicates later
 // Gitlab UI displays each pattern separately even though they are owned by the same groups.
@@ -88,20 +70,10 @@ const approvalsSectionObserver = new MutationObserver(async (mutations) => {
   try {
     for (const { addedNodes } of mutations) {
       for (const node of addedNodes) {
-        // We don't care about anything which isn't a HTML element.
-        if (!(node instanceof HTMLElement)) continue;
-
-        // Everything we need to scrape is either a div (approvalsFooterTestId) or inside a table - approvalRowsTestId
-        if (!(node.nodeName === "DIV" || node.nodeName === "TBODY")) continue;
-
         // If we have an approvals section - fetch the codeowners file if we haven't done so already.
-        if (
-          node.getAttribute("data-testid") === approvalsFooterTestId &&
-          !codeOwnersData
-        ) {
+        if (containsApprovalsFooterSection(node) && !codeOwnersData) {
           const parsedCodeOwnersFile = await loadCodeOwners(
             codeOwnersFilterText,
-            branch,
             projectId!
           );
 
@@ -118,40 +90,31 @@ const approvalsSectionObserver = new MutationObserver(async (mutations) => {
         if (codeOwnersData) {
           const groupedApprovals: ApprovalSectionsByOwners = {};
 
-          // Let's get all the rows which contain a code owner section
-          const approvalRulesElements = node.querySelectorAll(
-            `[data-testid=${approvalRowsTestId}]`
-          );
+          const approvalRows = getApprovalRows(node);
 
           // Replace the shit gitlab UI with legible values for code owners.
-          approvalRulesElements.forEach((rule) => {
-            // Grab the element which contains the literal 'Code Owners' text.
-            // The immediate sibling has the actual pattern e.g. 'libs/ui/' - sadly the pattern element itself
-            // has no identifiable selector in the DOM.
-            const codeOwnersTitleElement = rule.querySelector(
-              `[data-testid=${codeOwnersTitleTestId}]`
-            );
+          approvalRows.forEach((rule) => {
+            const header = getApprovalRowHeaderElement(rule);
 
-            if (codeOwnersTitleElement) {
-              const codeOwnersPatternElement =
-                codeOwnersTitleElement.nextElementSibling as HTMLElement;
+            if (header) {
+              const pattern = header.nextElementSibling as HTMLElement;
 
               // Let's replace the pattern e.g. libs/ui/ with the actual owners e.g.
-              if (codeOwnersPatternElement) {
+              if (pattern) {
                 const ownersForPattern =
                   getMatchingCodeOwnersForPattern(
                     codeOwnersData,
-                    codeOwnersPatternElement.innerText
-                  ) || codeOwnersPatternElement.innerText;
+                    pattern.innerText
+                  ) || pattern.innerText;
 
                 addUpdateApprovalSectionForOwners(
                   groupedApprovals,
                   ownersForPattern,
-                  codeOwnersPatternElement,
+                  pattern,
                   rule as HTMLElement
                 );
 
-                codeOwnersPatternElement.innerText = ownersForPattern;
+                pattern.innerText = ownersForPattern;
               }
             }
           });
@@ -172,40 +135,34 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
-const startObserving = async () => {
-  const approvalSection = document.getElementsByClassName(
-    approvalsSectionClassName
-  )[0];
-
+const startObservingApprovalsSection = async () => {
   codeOwnersFilterText =
     (await getValueFromStorage("codeOwnersRemove"))?.split(",") || [];
 
-  approvalsSectionObserver.observe(approvalSection, {
+  approvalsSectionObserver.observe(getApprovalsContainer(), {
     childList: true,
     subtree: true,
     attributeFilter: ["data-test-id"],
   });
 };
 
-if (branch && projectId) {
+if (projectId) {
   try {
     // Let's wait until we have something we're interested in before observing - it's much more lightweight this way.
     const interval = setInterval(async () => {
-      const approvalSection = document.getElementsByClassName(
-        approvalsSectionClassName
-      );
+      const approvalsContainer = getApprovalsContainer();
 
-      if (!approvalSection.length) return;
+      if (!approvalsContainer) return;
 
       clearInterval(interval);
 
       // We can start observing given we're on the correct tab.
-      approvalSection && startObserving();
+      startObservingApprovalsSection();
 
       // Since there's no nice way to listen for location changes given they can be via history or pop states - let's start observing the section (tabs) themselves
       // Listen in for when tab switches so we can start / stop observing as needed - no point trying to check for approvals when we're not in the right section.
-      const mergeApprovalsSection = document.getElementById("notes");
-      if (mergeApprovalsSection) {
+      const overviewTab = getOverviewTab();
+      if (overviewTab) {
         tabsObserver = new MutationObserver(
           ([{ target: approvalSectionNode }]) => {
             const styles = window.getComputedStyle(
@@ -214,13 +171,13 @@ if (branch && projectId) {
 
             // Start observing if we're on the tab with approvals. Otherwise - we've gone elsewhere so stop until we're back again.
             if (styles.display == "block") {
-              startObserving();
+              startObservingApprovalsSection();
             } else {
               approvalsSectionObserver.disconnect();
             }
           }
         );
-        tabsObserver.observe(mergeApprovalsSection, {
+        tabsObserver.observe(overviewTab, {
           attributes: true,
           attributeFilter: ["style"],
         });

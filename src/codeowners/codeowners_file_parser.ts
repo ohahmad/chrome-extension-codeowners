@@ -45,27 +45,29 @@ export const getMatchingCodeOwnersForPattern = (
 
 export const loadCodeOwners = async (
   codeOwnersFilterText: string[],
-  branch: string | undefined | null,
   projectId: string
 ) => {
-  const response = await fetch(
-    `https://gitlab.com/api/v4/projects/${projectId}/repository/files/CODEOWNERS?ref=${
-      branch ?? "master"
-    }`
+  const branches = await fetch(
+    `https://gitlab.com/api/v4/projects/${projectId}/repository/branches`
   );
 
-  if (response.ok) {
+  if (branches.ok) {
+    const result: { name: string; default: boolean }[] = await branches.json();
+    const defaultBranch = result.find((x) => x.default)?.name;
+
+    if (!defaultBranch) return;
+
+    const response = await fetch(
+      `https://gitlab.com/api/v4/projects/${projectId}/repository/files/CODEOWNERS?ref=${defaultBranch}`
+    );
+
+    if (!response.ok) return;
+
     const { content: contentBase64 } = await response.json();
     const content = atob(contentBase64);
 
     const codeOwnersParsed = parseCodeOwners(content, codeOwnersFilterText);
 
     return codeOwnersParsed;
-  }
-
-  if (response.status == 401) {
-    alert(
-      "Hello. I'm the codeowners extension.\n\nIt looks like your gitlab session may have expired."
-    );
   }
 };
