@@ -123,6 +123,7 @@ const approvalsSectionObserver = new MutationObserver(async (mutations) => {
         }
       }
     }
+  // eslint-disable-next-line no-empty
   } catch {}
 });
 
@@ -183,5 +184,5 @@ if (projectId) {
         });
       }
     }, 1500);
-  } catch {}
+  } catch { /* empty */ }
 }

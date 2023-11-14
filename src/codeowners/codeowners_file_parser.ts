@@ -1,15 +1,15 @@
 export type CodeOwnersFormat = {
   pattern: string;
-  owners: Array<string>;
+  owners: string[];
 };
 
 const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
-  let entries: CodeOwnersFormat[] = [];
-  let lines = content.split("\n");
+  const entries: CodeOwnersFormat[] = [];
+  const lines = content.split("\n");
 
-  for (let line of lines) {
-    let [content] = line.split("#");
-    let trimmed = content.trim();
+  for (const line of lines) {
+    const [content] = line.split("#");
+    const trimmed = content.trim();
     if (trimmed === "") continue;
     // Ignore sections
     if (
@@ -19,7 +19,7 @@ const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
     )
       continue;
 
-    let [pattern, ...owners] = trimmed.split(/\s+/);
+    const [pattern, ...owners] = trimmed.split(/\s+/);
     entries.push({
       pattern,
       owners: owners.map((codeOwner) => {
