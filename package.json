@@ -7,7 +7,7 @@
     "copy-files": "copyfiles -u 1 src/manifest.json src/**/*.html src/**/*.png dist/",
     "build": "npm run clean && ./build.mjs minify bundle && npm run copy-files",
     "build-dev": "npm run clean && ./build.mjs bundle && npm run copy-files",
-    "watch": "npm run clean && npm run copy-files && ./build.mjs watch"
+    "watch": "npm run clean && npm run copy-files && ./build.mjs bundle watch"
   },
   "author": "ommer ahmad",
   "license": "ISC",
