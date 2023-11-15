@@ -25,13 +25,15 @@ const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
 
     entries.push({
       pattern,
-      owners: owners.map((codeOwner) => {
-        let updatedValue = codeOwner;
-        codeOwnersFilterText.forEach((removalText) => {
-          updatedValue = updatedValue.replace(removalText, '');
-        });
-        return updatedValue;
-      })
+      owners: owners
+        .map((codeOwner) => {
+          let updatedValue = codeOwner;
+          codeOwnersFilterText.forEach((removalText) => {
+            updatedValue = updatedValue.replace(removalText, '');
+          });
+          return updatedValue;
+        })
+        .sort()
     });
   }
 
