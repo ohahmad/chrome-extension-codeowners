@@ -1,7 +1,7 @@
-chrome.webNavigation.onDOMContentLoaded.addListener(async ({ tabId, url }) => {
+chrome.webNavigation.onDOMContentLoaded.addListener(({ tabId, url }) => {
   if (!url.includes("merge_requests/")) return;
 
-  chrome.scripting.executeScript({
+  void chrome.scripting.executeScript({
     target: { tabId },
     files: ["codeowners/codeowners.js"],
   });

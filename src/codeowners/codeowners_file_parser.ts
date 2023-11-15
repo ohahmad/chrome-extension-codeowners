@@ -3,23 +3,26 @@ export type CodeOwnersFormat = {
   owners: string[];
 };
 
+type GitLabBranchesResponse = { name: string; default: boolean }[];
+type GitLabCodeOwnersResponse = { content: string };
+
 const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
   const entries: CodeOwnersFormat[] = [];
   const lines = content.split("\n");
 
   for (const line of lines) {
     const [content] = line.split("#");
-    const trimmed = content.trim();
-    if (trimmed === "") continue;
+    const trimmed = content?.trim();
+    if (trimmed === undefined || trimmed === "") continue;
+
     // Ignore sections
-    if (
-      trimmed.length > 2 &&
-      trimmed[0] == "[" &&
-      trimmed[trimmed.length - 1] == "]"
-    )
+    if (trimmed.length > 2 && trimmed.startsWith("[") && trimmed.endsWith("]"))
       continue;
 
     const [pattern, ...owners] = trimmed.split(/\s+/);
+
+    if (pattern === undefined || pattern === "") continue;
+
     entries.push({
       pattern,
       owners: owners.map((codeOwner) => {
@@ -52,7 +55,7 @@ export const loadCodeOwners = async (
   );
 
   if (branches.ok) {
-    const result: { name: string; default: boolean }[] = await branches.json();
+    const result = (await branches.json()) as GitLabBranchesResponse;
     const defaultBranch = result.find((x) => x.default)?.name;
 
     if (!defaultBranch) return;
@@ -63,7 +66,7 @@ export const loadCodeOwners = async (
 
     if (!response.ok) return;
 
-    const { content: contentBase64 } = await response.json();
+    const { content: contentBase64 } = await response.json() as GitLabCodeOwnersResponse;
     const content = atob(contentBase64);
 
     const codeOwnersParsed = parseCodeOwners(content, codeOwnersFilterText);
