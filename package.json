@@ -9,7 +9,14 @@
     "build-dev": "npm run clean && ./build.mjs bundle && npm run copy-files",
     "watch": "npm run clean && npm run copy-files && ./build.mjs bundle watch",
     "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "npm run prettier",
+      "npm run lint"
+    ]
   },
   "author": "ommer ahmad",
   "license": "ISC",
@@ -22,6 +29,8 @@
     "eslint": "^8.53.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.1.0",
     "prettier": "^3.1.0",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.1",
