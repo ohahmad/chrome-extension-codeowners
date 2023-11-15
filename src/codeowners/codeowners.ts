@@ -1,17 +1,17 @@
 import {
   CodeOwnersFormat,
   getMatchingCodeOwnersForPattern,
-  loadCodeOwners,
-} from "./codeowners_file_parser";
+  loadCodeOwners
+} from './codeowners_file_parser';
 import {
   getApprovalRows,
   getApprovalRowHeaderElement,
   containsApprovalsFooterSection,
   projectId,
   getApprovalsContainer,
-  getOverviewTab,
-} from "./gitlab_dom_helper";
-import { getValueFromStorage } from "./storage_helper";
+  getOverviewTab
+} from './gitlab_dom_helper';
+import { getValueFromStorage } from './storage_helper';
 
 type ApprovalSectionsByOwners = Record<
   string, // the owners string e.g "@company/dev, @company/test"
@@ -44,7 +44,7 @@ const addUpdateApprovalSectionForOwners = (
     record[ownersForPattern] = {
       approvalSections: [approvalSectionElement],
       patterns: [patternElement.innerText],
-      patternElement: patternElement,
+      patternElement: patternElement
     };
   } else {
     record[ownersForPattern]?.approvalSections.push(approvalSectionElement);
@@ -56,7 +56,7 @@ const addUpdateApprovalSectionForOwners = (
 // Instead we will only display it once and set the title to all the matching patterns found in an MR
 const hideDuplicateApprovalSections = (record: ApprovalSectionsByOwners) => {
   for (const key in record) {
-    const paths = record[key]?.patterns.join("\n");
+    const paths = record[key]?.patterns.join('\n');
     const sectionsForOwner = record[key];
     if (paths && sectionsForOwner) {
       sectionsForOwner.patternElement.title = paths;
@@ -64,7 +64,7 @@ const hideDuplicateApprovalSections = (record: ApprovalSectionsByOwners) => {
 
     // Hide duplicates
     record[key]?.approvalSections.slice(1).forEach((approvalSection) => {
-      approvalSection.style.display = "none";
+      approvalSection.style.display = 'none';
     });
   }
 };
@@ -78,7 +78,7 @@ const approvalsSectionObserver = new MutationObserver((mutations) => {
           if (containsApprovalsFooterSection(node) && !codeOwnersData) {
             const parsedCodeOwnersFile = await loadCodeOwners(
               codeOwnersFilterText,
-              projectId ?? ""
+              projectId ?? ''
             );
 
             if (parsedCodeOwnersFile) {
@@ -134,23 +134,23 @@ const approvalsSectionObserver = new MutationObserver((mutations) => {
 
 // update UI when storage changes
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local") return;
+  if (areaName !== 'local') return;
 
   if (changes.codeOwnersRemove) {
     codeOwnersFilterText = (changes.codeOwnersRemove.newValue as string).split(
-      ","
+      ','
     );
   }
 });
 
 const startObservingApprovalsSection = async () => {
   codeOwnersFilterText =
-    (await getValueFromStorage("codeOwnersRemove"))?.split(",") ?? [];
+    (await getValueFromStorage('codeOwnersRemove'))?.split(',') ?? [];
 
   approvalsSectionObserver.observe(getApprovalsContainer() as Node, {
     childList: true,
     subtree: true,
-    attributeFilter: ["data-test-id"],
+    attributeFilter: ['data-test-id']
   });
 };
 
@@ -176,7 +176,7 @@ if (projectId) {
           const styles = window.getComputedStyle(approvalSectionNode);
 
           // Start observing if we're on the tab with approvals. Otherwise - we've gone elsewhere so stop until we're back again.
-          if (styles.display == "block") {
+          if (styles.display == 'block') {
             void startObservingApprovalsSection();
           } else {
             approvalsSectionObserver.disconnect();
@@ -184,7 +184,7 @@ if (projectId) {
         });
         tabsObserver.observe(overviewTab, {
           attributes: true,
-          attributeFilter: ["style"],
+          attributeFilter: ['style']
         });
       }
     }, 1500);

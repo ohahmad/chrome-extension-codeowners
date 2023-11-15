@@ -8,30 +8,30 @@ type GitLabCodeOwnersResponse = { content: string };
 
 const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
   const entries: CodeOwnersFormat[] = [];
-  const lines = content.split("\n");
+  const lines = content.split('\n');
 
   for (const line of lines) {
-    const [content] = line.split("#");
+    const [content] = line.split('#');
     const trimmed = content?.trim();
-    if (trimmed === undefined || trimmed === "") continue;
+    if (trimmed === undefined || trimmed === '') continue;
 
     // Ignore sections
-    if (trimmed.length > 2 && trimmed.startsWith("[") && trimmed.endsWith("]"))
+    if (trimmed.length > 2 && trimmed.startsWith('[') && trimmed.endsWith(']'))
       continue;
 
     const [pattern, ...owners] = trimmed.split(/\s+/);
 
-    if (pattern === undefined || pattern === "") continue;
+    if (pattern === undefined || pattern === '') continue;
 
     entries.push({
       pattern,
       owners: owners.map((codeOwner) => {
         let updatedValue = codeOwner;
         codeOwnersFilterText.forEach((removalText) => {
-          updatedValue = updatedValue.replace(removalText, "");
+          updatedValue = updatedValue.replace(removalText, '');
         });
         return updatedValue;
-      }),
+      })
     });
   }
 
@@ -43,7 +43,7 @@ export const getMatchingCodeOwnersForPattern = (
   pattern: string
 ) => {
   const ownersForPattern = entries.find((x) => x.pattern === pattern);
-  return ownersForPattern?.owners.join(", ");
+  return ownersForPattern?.owners.join(', ');
 };
 
 export const loadCodeOwners = async (
@@ -66,7 +66,8 @@ export const loadCodeOwners = async (
 
     if (!response.ok) return;
 
-    const { content: contentBase64 } = await response.json() as GitLabCodeOwnersResponse;
+    const { content: contentBase64 } =
+      (await response.json()) as GitLabCodeOwnersResponse;
     const content = atob(contentBase64);
 
     const codeOwnersParsed = parseCodeOwners(content, codeOwnersFilterText);

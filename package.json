@@ -7,7 +7,9 @@
     "copy-files": "copyfiles -u 1 src/manifest.json src/**/*.html src/**/*.png dist/",
     "build": "npm run clean && ./build.mjs minify bundle && npm run copy-files",
     "build-dev": "npm run clean && ./build.mjs bundle && npm run copy-files",
-    "watch": "npm run clean && npm run copy-files && ./build.mjs bundle watch"
+    "watch": "npm run clean && npm run copy-files && ./build.mjs bundle watch",
+    "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
+    "lint": "eslint ."
   },
   "author": "ommer ahmad",
   "license": "ISC",
@@ -18,6 +20,7 @@
     "copyfiles": "^2.4.1",
     "esbuild": "^0.19.5",
     "eslint": "^8.53.0",
+    "prettier": "^3.1.0",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",

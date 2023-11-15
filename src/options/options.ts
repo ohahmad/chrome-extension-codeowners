@@ -4,21 +4,21 @@ const codeOwnersRemoveInput: HTMLInputElement | null = document.querySelector(
 
 if (codeOwnersRemoveInput) {
   // update UI on startup
-  chrome.storage.local.get("codeOwnersRemove", (result) => {
+  chrome.storage.local.get('codeOwnersRemove', (result) => {
     const value = result.codeOwnersRemove as string | undefined;
-    codeOwnersRemoveInput.value = value ?? "";
+    codeOwnersRemoveInput.value = value ?? '';
   });
 
   // update storage when UI changes
-  codeOwnersRemoveInput.addEventListener("change", () => {
+  codeOwnersRemoveInput.addEventListener('change', () => {
     void chrome.storage.local.set({
-      codeOwnersRemove: codeOwnersRemoveInput.value,
+      codeOwnersRemove: codeOwnersRemoveInput.value
     });
   });
 
   // update UI when storage changes
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== "local") return;
+    if (areaName !== 'local') return;
 
     if (changes.codeOwnersRemove) {
       codeOwnersRemoveInput.value = changes.codeOwnersRemove.newValue as string;
