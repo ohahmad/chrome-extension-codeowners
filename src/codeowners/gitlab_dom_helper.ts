@@ -7,11 +7,6 @@ const approvalRowsTestId = 'approval-rules-row';
 // The selector for the literal 'Code Owners' text - one per code owner
 const codeOwnersTitleTestId = 'rule-section';
 
-export const branch =
-  document
-    .querySelector('.js-source-branch-copy')
-    ?.getAttribute('data-clipboard-text') ?? '';
-
 export const projectId = document.body.getAttribute('data-project-id');
 
 // We don't care about anything which isn't a HTML element.
