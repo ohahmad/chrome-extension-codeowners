@@ -76,10 +76,8 @@ const approvalsSectionObserver = new MutationObserver((mutations) => {
         for (const node of addedNodes) {
           // If we have an approvals section - fetch the codeowners file if we haven't done so already.
           if (containsApprovalsFooterSection(node) && !codeOwnersData) {
-            const parsedCodeOwnersFile = await loadCodeOwners(
-              codeOwnersFilterText,
-              projectId ?? ''
-            );
+            const parsedCodeOwnersFile =
+              await loadCodeOwners(codeOwnersFilterText);
 
             if (parsedCodeOwnersFile) {
               codeOwnersData = parsedCodeOwnersFile;

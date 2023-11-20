@@ -1,9 +1,11 @@
+import { branch, projectId } from './gitlab_dom_helper';
+
 export type CodeOwnersFormat = {
   pattern: string;
   owners: string[];
 };
 
-type GitLabBranchesResponse = { name: string; default: boolean }[];
+type GitLabBranchResponse = { name: string; default: boolean };
 type GitLabCodeOwnersResponse = { content: string };
 
 const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
@@ -48,22 +50,32 @@ export const getMatchingCodeOwnersForPattern = (
   return ownersForPattern?.owners.join(', ');
 };
 
-export const loadCodeOwners = async (
-  codeOwnersFilterText: string[],
-  projectId: string
-) => {
-  const branches = await fetch(
-    `https://gitlab.com/api/v4/projects/${projectId}/repository/branches`
+const fetchBranch = async (branchName: string) =>
+  await fetch(
+    `https://gitlab.com/api/v4/projects/${projectId}/repository/branches/${branchName}`
   );
 
-  if (branches.ok) {
-    const result = (await branches.json()) as GitLabBranchesResponse;
-    const defaultBranch = result.find((x) => x.default)?.name;
+export const loadCodeOwners = async (codeOwnersFilterText: string[]) => {
+  let branchResponse = await fetchBranch(branch);
 
-    if (!defaultBranch) return;
+  if (!branchResponse.ok) {
+    branchResponse = await fetchBranch('master');
+  }
+
+  if (!branchResponse.ok) {
+    branchResponse = await fetchBranch('main');
+  }
+
+  if (!branchResponse.ok) {
+    branchResponse = await fetchBranch('qa');
+  }
+
+  if (branchResponse.ok) {
+    const result = (await branchResponse.json()) as GitLabBranchResponse;
+    const branchName = result.name;
 
     const response = await fetch(
-      `https://gitlab.com/api/v4/projects/${projectId}/repository/files/CODEOWNERS?ref=${defaultBranch}`
+      `https://gitlab.com/api/v4/projects/${projectId}/repository/files/CODEOWNERS?ref=${branchName}`
     );
 
     if (!response.ok) return;
