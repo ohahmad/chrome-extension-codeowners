@@ -1,7 +1,7 @@
 {
   "name": "Gitlab resolve code owners",
   "description": "In Gitlab - for any merge request, it switches out the Code Owners from the file pattern match to the actual owners.",
-  "version": "1.0.0.4",
+  "version": "1.0.0.5",
   "permissions": ["scripting", "webNavigation", "storage"],
   "background": {
     "service_worker": "codeowners_sw.js"
