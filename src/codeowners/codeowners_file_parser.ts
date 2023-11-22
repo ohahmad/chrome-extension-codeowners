@@ -12,22 +12,42 @@ const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
   const entries: CodeOwnersFormat[] = [];
   const lines = content.split('\n');
 
+  let ownersForSection: string[] = [];
   for (const line of lines) {
-    const [content] = line.split('#');
-    const trimmed = content?.trim();
-    if (trimmed === undefined || trimmed === '') continue;
+    // Ignore comments (can be an entire line or inlined after the file pattern definition)
+    const [lineExcludingComment] = line.split('#');
+    const lineTrimmed = lineExcludingComment?.trim();
 
-    // Ignore sections
-    if (trimmed.length > 2 && trimmed.startsWith('[') && trimmed.endsWith(']'))
+    if (lineTrimmed === undefined || lineTrimmed === '') continue;
+
+    // Check if the line is a section i.e does it have []
+    const lastIndexOfCloseBracket = lineTrimmed.lastIndexOf(']');
+    const isSection =
+      lastIndexOfCloseBracket > 0 && lineTrimmed.lastIndexOf('[') > 0;
+
+    // If we're a section - store the owners so we can set them on subsequent file patterns for that section.
+    if (isSection) {
+      ownersForSection = lineTrimmed
+        .substring(lastIndexOfCloseBracket + 2) // +2 to ignore for extra space after ]
+        .split(/\s+/);
+
+      // We don't actually want to add the section to the entries so let's skip ahead.
       continue;
+    }
 
-    const [pattern, ...owners] = trimmed.split(/\s+/);
+    const [filePattern, ...ownersForFilePattern] = lineTrimmed.split(/\s+/);
 
-    if (pattern === undefined || pattern === '') continue;
+    if (filePattern === undefined || filePattern === '') continue;
 
     entries.push({
-      pattern,
-      owners: owners
+      pattern: filePattern.startsWith('/')
+        ? filePattern.substring(1)
+        : filePattern,
+      // Owners defined directly for a file pattern (even within a section) always supersede section owners.
+      owners: (ownersForFilePattern.length
+        ? ownersForFilePattern
+        : ownersForSection
+      )
         .map((codeOwner) => {
           let updatedValue = codeOwner;
           codeOwnersFilterText.forEach((removalText) => {
@@ -39,6 +59,7 @@ const parseCodeOwners = (content: string, codeOwnersFilterText: string[]) => {
     });
   }
 
+  // Reversed as last match in a codeowners file wins
   return entries.reverse();
 };
 
@@ -46,7 +67,23 @@ export const getMatchingCodeOwnersForPattern = (
   entries: CodeOwnersFormat[],
   pattern: string
 ) => {
-  const ownersForPattern = entries.find((x) => x.pattern === pattern);
+  let formattedPattern = pattern.startsWith('/')
+    ? pattern.substring(1)
+    : pattern;
+
+  let ownersForPattern = entries.find((x) => x.pattern === formattedPattern);
+
+  // Try and match wildcard entries
+  if (ownersForPattern === undefined) {
+    ownersForPattern = entries.find((x) => {
+      let codeOwnerFilePattern = x.pattern.endsWith('*')
+        ? x.pattern.slice(0, -1)
+        : x.pattern;
+
+      return codeOwnerFilePattern === pattern;
+    });
+  }
+
   return ownersForPattern?.owners.join(', ');
 };
 
